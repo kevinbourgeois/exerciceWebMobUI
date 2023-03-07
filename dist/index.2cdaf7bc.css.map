@@ -1,0 +1,1 @@
+{"mappings":"AAAA;;AAEA","sources":["src/style.css"],"sourcesContent":["@import-normalize;\r\n\r\nheader {\r\n    background-color: red;\r\n}"],"names":[],"version":3,"file":"index.2cdaf7bc.css.map","sourceRoot":"/__parcel_source_root/"}
