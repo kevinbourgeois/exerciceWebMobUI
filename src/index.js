@@ -1,19 +1,35 @@
-import {getArtists} from "./api";
+import {getArtistes, getSongByArtisteID} from "./api.js";
+import{addToFavorites} from "./favourites";
+
+const playbutton = document.querySelector(".play-button");
+const favouritebutton = document.querySelector(".favourite-button");
+const audio = document.querySelector("#audio-player");
+addToFavorites("test")
+
+window.addEventListener("hashchange", (e) => {
+
+  let hash = window.location.hash;
+
+  const hashSplit = hash.split('-');
 
 
+  if(hash === '') hash = '#home'
 
-
-window.addEventListener("hashchange", async (e) => {
-  const hash = window.location.hash;
-
-
-  switch (hash) {
+  switch (hashSplit[0]) {
     case "#artists":
-      const artists = await getArtists();
-      console.log(artists)
 
+      //artists by id
+      if (hashSplit[1]) {
+          document.querySelector("#favourite-section").classList.add("active");
+          getSongByArtisteID(hashSplit[1]);
+      }
+      //affiche juste les artistes
+      else {
+        getArtistes();
+      }
 
       break;
+
   }
 
 
@@ -26,3 +42,11 @@ window.addEventListener("hashchange", async (e) => {
 
 
 });
+
+playbutton.addEventListener("click", (e) => {
+    audio.play();
+})
+
+favouritebutton.addEventListener("click", (e) => {
+    alert("caca");
+})

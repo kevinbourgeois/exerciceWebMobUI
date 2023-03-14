@@ -142,7 +142,7 @@
       this[globalName] = mainExports;
     }
   }
-})({"jC2qd":[function(require,module,exports) {
+})({"hnNSs":[function(require,module,exports) {
 var global = arguments[3];
 var HMR_HOST = null;
 var HMR_PORT = null;
@@ -557,13 +557,23 @@ function hmrAccept(bundle, id) {
 }
 
 },{}],"8lqZg":[function(require,module,exports) {
-var _api = require("./api");
-window.addEventListener("hashchange", async (e)=>{
-    const hash = window.location.hash;
-    switch(hash){
+var _apiJs = require("./api.js");
+var _favourites = require("./favourites");
+const playbutton = document.querySelector(".play-button");
+const favouritebutton = document.querySelector(".favourite-button");
+const audio = document.querySelector("#audio-player");
+(0, _favourites.addToFavorites)("test");
+window.addEventListener("hashchange", (e)=>{
+    let hash = window.location.hash;
+    const hashSplit = hash.split("-");
+    if (hash === "") hash = "#home";
+    switch(hashSplit[0]){
         case "#artists":
-            const artists = await (0, _api.getArtists)();
-            console.log(artists);
+            //artists by id
+            if (hashSplit[1]) {
+                document.querySelector("#favourite-section").classList.add("active");
+                (0, _apiJs.getSongByArtisteID)(hashSplit[1]);
+            } else (0, _apiJs.getArtistes)();
             break;
     }
     document.querySelector("footer a.active")?.classList.remove("active");
@@ -571,22 +581,44 @@ window.addEventListener("hashchange", async (e)=>{
     document.querySelector("section.active").classList.remove("active");
     document.querySelector(hash + "-section").classList.add("active");
 });
+playbutton.addEventListener("click", (e)=>{
+    audio.play();
+});
+favouritebutton.addEventListener("click", (e)=>{
+    alert("caca");
+});
 
-},{"./api":"8Zgej"}],"8Zgej":[function(require,module,exports) {
+},{"./api.js":"8Zgej","./favourites":"jf3bL"}],"8Zgej":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "parseJSON", ()=>parseJSON);
-parcelHelpers.export(exports, "getArtists", ()=>getArtists);
+parcelHelpers.export(exports, "getArtistes", ()=>getArtistes);
+parcelHelpers.export(exports, "getSongByArtisteID", ()=>getSongByArtisteID);
 const BASE_URL = "https://webmob-ui-22-spotlified.herokuapp.com";
-const parseJSON = (url)=>{
-    fetch(url).then((res)=>{
-        return res.json();
-    }).then((res)=>{
-        return res;
+const listeArtiste = document.querySelector(".artists-list");
+const listeMusique = document.querySelector("#songs-list");
+const getArtistes = ()=>fetch(BASE_URL + "/api/artists").then((res)=>res.json()).then((artistes)=>{
+        const template = document.querySelector("#template-artist");
+        listeArtiste.replaceChildren();
+        for (const artiste of artistes){
+            const copyTemplate = template.content.cloneNode(true);
+            copyTemplate.querySelector("img").src = artiste["image_url"];
+            copyTemplate.querySelector("p").innerText = artiste["name"];
+            copyTemplate.querySelector("a").href = "#artists-" + artiste["id"];
+            listeArtiste.appendChild(copyTemplate);
+        }
     });
-};
-const getArtists = ()=>{
-    return parseJSON(BASE_URL + "/api/artists");
+const getSongByArtisteID = (id)=>{
+    fetch(BASE_URL + `/api/artists/${id}/songs`).then((res)=>res.json()).then((songs)=>{
+        const template = document.querySelector("#songs-list-template");
+        listeMusique.replaceChildren();
+        for (const song of songs){
+            const copyTemplate = template.content.cloneNode(true);
+            copyTemplate.querySelector("li").innerText = song["title"];
+            listeMusique.appendChild(copyTemplate);
+            document.querySelector("#player-section img").src = song["artist"]["image_url"];
+            document.querySelector("#audio-player").src = song["audio_url"];
+        }
+    });
 };
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gkKU3":[function(require,module,exports) {
@@ -619,6 +651,179 @@ exports.export = function(dest, destName, get) {
     });
 };
 
-},{}]},["jC2qd","8lqZg"], "8lqZg", "parcelRequire5fc1")
+},{}],"jf3bL":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "addToFavorites", ()=>addToFavorites);
+var _jsonStorage = require("./lib/jsonStorage"); // ou autre chemin que vous aurez choisi
+var _jsonStorageDefault = parcelHelpers.interopDefault(_jsonStorage);
+const favoriteStorage = new (0, _jsonStorageDefault.default)({
+    name: "favorites"
+});
+const addToFavorites = (song)=>{
+    favoriteStorage.addItem(song);
+};
+
+},{"./lib/jsonStorage":"ixW2l","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"ixW2l":[function(require,module,exports) {
+/** 
+ * Class representing a LocalStorage handler, with JSON and storage's name management 
+ *
+ * Licence: GNU General Public License v3.0  
+ * Author: Nicolas Chabloz  
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+exports.default = class {
+    /**
+   * Create a JsonStorage.
+   * 
+   * @param {Object} [options={}] - Options
+   * @param {string} [options.name="default"] - The name of the storage.
+   * @param {boolean} [options.listen=true] - Listen to storage events for data update
+   * @param {boolean} [options.trigger=true] - Trigger an event on "window" when data is set, changed or deleted in the storage
+   * @param {boolean} [options.eventName="jsonstorage"] - The event's name to trigger 
+   */ constructor(options = {}){
+        this.options = {
+            name: options.name || "default",
+            listen: options.listen || true,
+            trigger: options.trigger || true,
+            eventName: options.eventName || "jsonstorage"
+        };
+        this._reloadKeys();
+        // reload keys data when storage change from another tab
+        if (this.options.listen) window.addEventListener("storage", (evt)=>{
+            if (!evt.key.startsWith(`${this.options.name}_`)) return;
+            this._reloadKeys();
+            if (this.options.trigger) window.dispatchEvent(new Event(this.options.eventName));
+        });
+    }
+    /**
+   * Private method
+   */ _reloadKeys() {
+        this.storageKeys = Object.keys(localStorage).filter((key)=>key.startsWith(`${this.options.name}_`)).reduce((map, key)=>map.set(key.substring(`${this.options.name}_`.length), 1), new Map());
+    }
+    /**
+   * Returns a new Iterator object that contains an array of [key, value] for each element in the storage
+   */ [Symbol.iterator]() {
+        return this.entries();
+    }
+    /**
+   * Returns a new Iterator object that contains the keys for each element in the storage.
+   */ keys() {
+        return this.storageKeys.keys();
+    }
+    /**
+   * Returns the name of the nth key in the storage
+   * 
+   * @param {integer} ind Indice
+   */ key(ind) {
+        let keys = [
+            ...this.keys()
+        ];
+        if (ind < 0 || ind >= keys.length) return null;
+        return keys[ind];
+    }
+    /**
+   * Returns a new Iterator object that contains the values for each element in the storage.
+   */ *values() {
+        for (let k of this.keys())yield this.getItem(k);
+    }
+    /**
+   * Returns a new Iterator object that contains an array of [key, value] for each element in the storage.
+   */ *entries() {
+        for (let k of this.keys())yield [
+            k,
+            this.getItem(k)
+        ];
+    }
+    /**
+   * Calls callback once for each key-value pair present in the storage. The callback is called with the value and the key as parameters.
+   * 
+   * @param {function} callback 
+   */ forEach(callback) {
+        for (let entrie of this)callback(entrie[1], entrie[0]);
+    }
+    /**
+   * Return an array of [key, value] for each element in the storage.
+   */ toArray() {
+        return [
+            ...this.entries()
+        ];
+    }
+    /**
+   * Return an object with a propertie key: value for each element in the storage.
+   */ toObject() {
+        let obj = {};
+        for (let ent of this)obj[ent[0]] = ent[1];
+        return obj;
+    }
+    /**
+   * Return a JSON string representing an object with a propertie key: value for each element in the storage.
+   */ toJSON() {
+        return JSON.stringify(this.toObject());
+    }
+    /**
+   * Return the numbers of elements in the storage
+   */ get length() {
+        return this.storageKeys.size;
+    }
+    /**
+   * Return the numbers of elements in the storage (alias for this.length)
+   */ get size() {
+        return this.length;
+    }
+    /**
+   * Add the key and the key's value to the storage, or update that key's value if it already exists
+   * 
+   * @param {string} key the name of the key you want to create/update.
+   * @param {*} val the value you want to give the key you are creating/updating.
+   */ setItem(key, val) {
+        localStorage.setItem(`${this.options.name}_${key}`, JSON.stringify(val));
+        this.storageKeys.set(key, 1);
+        if (this.options.trigger) window.dispatchEvent(new Event(this.options.eventName));
+    }
+    /**
+   * Private method
+   */ _genKey() {
+        return "uid_" + Math.random().toString(36).substring(2, 10);
+    }
+    /**
+   * Add the value with a random unique key to the storage.
+   * Return the key.
+   * 
+   * @param {*} val the value you want to give the key you are creating/updating.
+   */ addItem(val) {
+        let key = this._genKey();
+        while(this.storageKeys.has(key))key = this._genKey();
+        this.setItem(key, val);
+        return key;
+    }
+    /**
+   * Return the value of the key in the storage. If the key does not exist, null is returned.
+   * 
+   * @param {string} key the name of the key you want to retrieve the value of.
+   */ getItem(key) {
+        let val = localStorage.getItem(`${this.options.name}_${key}`);
+        if (val == null) return null;
+        return JSON.parse(val);
+    }
+    /**
+   * Remove the key from the storage if it exists. If there is no item associated with the given key, this method will do nothing.
+   * 
+   * @param {string} the name of the key you want to remove. 
+   */ removeItem(key) {
+        localStorage.removeItem(`${this.options.name}_${key}`);
+        this.storageKeys.delete(key);
+        if (this.options.trigger) window.dispatchEvent(new Event(this.options.eventName));
+    }
+    /**
+   * Clears all keys in the storage
+   */ clear() {
+        for (let key of this.keys())localStorage.removeItem(`${this.options.name}_${key}`);
+        this.storageKeys.clear();
+        if (this.options.trigger) window.dispatchEvent(new Event(this.options.eventName));
+    }
+};
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["hnNSs","8lqZg"], "8lqZg", "parcelRequire5fc1")
 
 //# sourceMappingURL=index.975ef6c8.js.map

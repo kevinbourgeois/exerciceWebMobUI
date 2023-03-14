@@ -149,7 +149,7 @@ summary {
   display: list-item;
 }
 
-template, [hidden] {
+[hidden] {
   display: none;
 }
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:li="http://www.w3.org/1999/html">
 <head>
   <meta charset="UTF-8">
   <title>Spotlify</title>
@@ -24,6 +24,8 @@ search
     </section>
 
       <section id="player-section">
+          <audio controls="" src="#" id="audio-player"></audio>
+
           <img src="/album_cover.3735796b.jpg" alt="">
 
           <div>
@@ -31,7 +33,7 @@ search
                 skip_previous
               </span>
 
-              <span class="material-symbols-outlined">
+              <span class="material-symbols-outlined play-button">
                 play_arrow
               </span>
 
@@ -50,12 +52,17 @@ search
 
       <section id="artists-section">
           <h2>Artistes</h2>
-          <div class="artists-list">
 
-              <template>
+          <template id="template-artist">
+              <a href="#">
                   <img src="/album_cover.3735796b.jpg" alt="">
                   <p>Grinchset</p>
-              </template>
+              </a>
+          </template>
+
+          <div class="artists-list">
+
+
 
 
           </div>
@@ -63,9 +70,25 @@ search
 
       <section id="favourite-section">
           <h2>Favoris</h2>
-          <ul>
-              <li>Grinchset shyt</li>
-              <li>Bonsoir</li>
+
+          <template id="songs-list-template">
+              <li>
+                  xxx
+              </li>
+
+              <span class="material-symbols-outlined favourite-button">
+                      favorite
+                  </span>
+
+              <a href="#player">
+                      <span class="material-symbols-outlined play-button">
+                          play_arrow
+                      </span>
+              </a>
+          </template>
+
+          <ul id="songs-list">
+
           </ul>
       </section>
   </main>
